@@ -172,3 +172,26 @@ class UsersCRUD:
         except Exception:
             await db.rollback()
             raise
+
+
+    @staticmethod
+    async def get_by_login(db: AsyncSession, user_login: str):
+        """
+        Получение записи о пользователе по логину.
+
+        Параметры:
+            db: AsyncSession - асинхронная сессия БД;
+            user_login: str - логин пользователя.
+
+        Возвращает:
+            user - запись о пользователе из БД.
+        """
+        try:
+            data = await db.execute(select(Users).where(Users.login == user_login))
+            user = data.scalars().first()
+            return user
+        except OperationalError:
+            raise
+        except Exception:
+            raise
+
