@@ -1,5 +1,5 @@
 from datetime import date
-from sqlalchemy import Integer, String, Date
+from sqlalchemy import Integer, String, Date, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database.database import Base
 
@@ -15,7 +15,8 @@ class Users(Base):
         date_of_birth: Date - дата рождения пользователя,
         passport: String(11) - паспорт пользователя,
         login: String(255) - логин пользователя,
-        password: String(255) - пароль пользователя.
+        password: String(255) - пароль пользователя,
+        is_admin: Boolean - является ли пользователь администратором.
 
     Связи:
         wallets - у одного пользователя может быть много кошельков (один ко многим),
@@ -31,6 +32,7 @@ class Users(Base):
     passport: Mapped[str] = mapped_column(String(11), unique=True)
     login: Mapped[str | None] = mapped_column(String(255), unique=True)
     password: Mapped[str | None] = mapped_column(String(255))
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
 
     wallets: Mapped[list["Wallets"]] = relationship('Wallets', back_populates='user')
     goals: Mapped[list["Goals"]] = relationship('Goals', back_populates='user')
