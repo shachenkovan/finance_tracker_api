@@ -79,7 +79,8 @@ class UsersCRUD:
                 'date_of_birth': user.date_of_birth,
                 'passport': user.passport,
                 'login': user.login,
-                'password': user.password
+                'password': user.password,
+                'is_admin': user.is_admin
             }
         except IntegrityError:
             await db.rollback()
@@ -128,7 +129,8 @@ class UsersCRUD:
                 'date_of_birth': user.date_of_birth,
                 'passport': user.passport,
                 'login': user.login,
-                'password': user.password
+                'password': user.password,
+                'is_admin': user.is_admin
             }
         except IntegrityError:
             await db.rollback()

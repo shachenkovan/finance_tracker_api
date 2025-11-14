@@ -13,7 +13,8 @@ class UserSchema(BaseModel):
         date_of_birth: date | None - дата рождения пользователя,
         passport: str | None - паспорт пользователя,
         login: str | None - логин учетной записи пользователя,
-        password: str | None - пароль пользователя.
+        password: str | None - пароль пользователя,
+        bool = Field(default=False, description='Флаг, обозначающий, является ли пользователь администратором.
 
     Кастомные валидаторы:
         fio_validate - проверка на то, что имя и фамилия введены только буквами,
@@ -28,6 +29,7 @@ class UserSchema(BaseModel):
                                  description='Паспортные данные пользователя в формате "XXXX XXXXXX".')
     login: str | None = Field(min_length=5, max_length=255, default=None, description='Логин учетной записи пользователя.')
     password: str | None = Field(min_length=5, max_length=255, default=None, description='Пароль учетной записи пользователя.')
+    is_admin: bool = Field(default=False, description='Флаг, обозначающий, является ли пользователь администратором.')
 
     @field_validator('name', 'lastname')
     def fio_validate(cls, value: str | None) -> str | None:
