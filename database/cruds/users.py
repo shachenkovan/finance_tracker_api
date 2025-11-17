@@ -51,7 +51,7 @@ class UsersCRUD:
             raise
 
     @staticmethod
-    async def create(db: AsyncSession, user: Users):
+    async def create(db: AsyncSession, user_data):
         """
         Создание новой записи о пользователе.
 
@@ -70,6 +70,13 @@ class UsersCRUD:
             } - запись о пользователе из БД без поля id.
         """
         try:
+            if isinstance(user_data, dict):
+                user = Users(**user_data)
+            elif isinstance(user_data, Users):
+                user = user_data
+            else:
+                raise ValueError(f"Неподдерживаемый тип данных: {type(user_data)}")
+
             db.add(user)
             await db.commit()
             await db.refresh(user)
