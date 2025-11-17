@@ -4,7 +4,8 @@ from api import (budget_router,
                  category_router,
                  transaction_router,
                  user_router,
-                 wallet_router)
+                 wallet_router,
+                 sign_in_router)
 
 app = FastAPI(
     title="API для финансового трекера",
@@ -17,6 +18,7 @@ app.include_router(goal_router, tags=['Цели'])
 app.include_router(transaction_router, tags=['Транзакции'])
 app.include_router(user_router, tags=['Пользователи'])
 app.include_router(wallet_router, tags=['Кошельки'])
+app.include_router(sign_in_router, tags=['Вход в систему'])
 
 
 @app.get('/')
