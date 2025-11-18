@@ -3,10 +3,11 @@ from fastapi import APIRouter, HTTPException
 from fastapi.params import Depends
 from sqlalchemy.exc import OperationalError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from api.sign_in_router import get_current_user
 from database.database import get_db
 from database.models import Wallets
 from database.cruds import WalletsCRUD
-from shchemas import WalletSchema, WalletGetSchema, WalletPostSchema
+from shchemas import WalletSchema, WalletGetSchema, WalletPostSchema, UserLoginSchema
 
 wallet_router = APIRouter(prefix='/wallets')
 
@@ -17,7 +18,10 @@ wallet_router = APIRouter(prefix='/wallets')
     summary='Получить все кошельки.',
     description='Выводит список всех кошельков.'
 )
-async def get_all_wallets(db: AsyncSession = Depends(get_db)) -> List[WalletGetSchema]:
+async def get_all_wallets(
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> List[WalletGetSchema]:
     """
     Получение списка всех кошельков.
 
@@ -54,7 +58,11 @@ async def get_all_wallets(db: AsyncSession = Depends(get_db)) -> List[WalletGetS
     summary='Получить кошелек по уникальному ключу.',
     description='Выводит кошелек по уникальному ключу.'
 )
-async def get_wallet_by_id(wallet_id: int, db: AsyncSession = Depends(get_db)) -> WalletGetSchema:
+async def get_wallet_by_id(
+        wallet_id: int,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> WalletGetSchema:
     """
     Получение кошелька по уникальному ключу.
 
@@ -92,7 +100,11 @@ async def get_wallet_by_id(wallet_id: int, db: AsyncSession = Depends(get_db)) -
     summary='Создать кошелек.',
     description='Создает новый кошелек.'
 )
-async def create_wallet(wallet_data: WalletPostSchema, db: AsyncSession = Depends(get_db)) -> WalletPostSchema:
+async def create_wallet(
+        wallet_data: WalletPostSchema,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> WalletPostSchema:
     """
     Создание нового кошелька.
 
@@ -141,8 +153,12 @@ async def create_wallet(wallet_data: WalletPostSchema, db: AsyncSession = Depend
     summary='Обновить кошелек по уникальному ключу.',
     description='Обновляет запись о пользователе по уникальному ключу.'
 )
-async def update_wallet(wallet_id: int, changes: WalletSchema,
-                        db: AsyncSession = Depends(get_db)) -> WalletSchema:
+async def update_wallet(
+        wallet_id: int,
+        changes: WalletSchema,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> WalletSchema:
     """
     Обновление кошелька по уникальному ключу.
 
@@ -196,7 +212,11 @@ async def update_wallet(wallet_id: int, changes: WalletSchema,
     summary='Удалить кошелек по уникальному ключу.',
     description='Удаляет запись о кошельке по уникальному ключу.'
 )
-async def delete_wallet(wallet_id: int, db: AsyncSession = Depends(get_db)) -> dict[str, str]:
+async def delete_wallet(
+        wallet_id: int,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> dict[str, str]:
     """
     Удаление кошелька по уникальному ключу.
 

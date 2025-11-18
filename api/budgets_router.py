@@ -3,10 +3,11 @@ from fastapi import APIRouter, HTTPException
 from fastapi.params import Depends
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession
+from api.sign_in_router import get_current_user
 from database.database import get_db
 from database.models import Budgets
 from database.cruds import BudgetsCRUD
-from shchemas import BudgetGetSchema, BudgetPostSchema, BudgetSchema
+from shchemas import BudgetGetSchema, BudgetPostSchema, BudgetSchema, UserLoginSchema
 
 budget_router = APIRouter(prefix='/budgets')
 
@@ -17,7 +18,10 @@ budget_router = APIRouter(prefix='/budgets')
     summary='Получить все бюджеты.',
     description='Выводит список всех бюджетов пользователя.'
 )
-async def get_all_budgets(db: AsyncSession = Depends(get_db)) -> List[BudgetGetSchema]:
+async def get_all_budgets(
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> List[BudgetGetSchema]:
     """
     Получение списка всех бюджетов.
 
@@ -54,7 +58,11 @@ async def get_all_budgets(db: AsyncSession = Depends(get_db)) -> List[BudgetGetS
     summary='Получить бюджет по уникальному ключу.',
     description='Выводит бюджет пользователя по уникальному ключу.'
 )
-async def get_budget_by_id(budget_id: int, db: AsyncSession = Depends(get_db)) -> BudgetGetSchema:
+async def get_budget_by_id(
+        budget_id: int,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> BudgetGetSchema:
     """
     Получение бюджета по уникальному ключу.
 
@@ -92,7 +100,11 @@ async def get_budget_by_id(budget_id: int, db: AsyncSession = Depends(get_db)) -
     summary='Создать бюджет.',
     description='Создает новый бюджет пользователя.'
 )
-async def create_budget(budget_data: BudgetPostSchema, db: AsyncSession = Depends(get_db)) -> BudgetPostSchema:
+async def create_budget(
+        budget_data: BudgetPostSchema,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> BudgetPostSchema:
     """
     Создание нового бюджета.
 
@@ -141,8 +153,11 @@ async def create_budget(budget_data: BudgetPostSchema, db: AsyncSession = Depend
     summary='Обновить бюджет по уникальному ключу.',
     description='Обновляет запись о бюджете пользователя по уникальному ключу.'
 )
-async def update_budget(budget_id: int, changes: BudgetSchema,
-                        db: AsyncSession = Depends(get_db)) -> BudgetSchema:
+async def update_budget(
+        budget_id: int, changes: BudgetSchema,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> BudgetSchema:
     """
     Обновление бюджета по уникальному ключу.
 
@@ -196,7 +211,11 @@ async def update_budget(budget_id: int, changes: BudgetSchema,
     summary='Удалить бюджет по уникальному ключу.',
     description='Удаляет запись о бюджете пользователя по уникальному ключу.'
 )
-async def delete_budget(budget_id: int, db: AsyncSession = Depends(get_db)) -> dict[str, str]:
+async def delete_budget(
+        budget_id: int,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> dict[str, str]:
     """
     Удаление бюджета по уникальному ключу.
 

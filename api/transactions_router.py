@@ -3,10 +3,11 @@ from fastapi import APIRouter, HTTPException
 from fastapi.params import Depends
 from sqlalchemy.exc import OperationalError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from api.sign_in_router import get_current_user
 from database.database import get_db
 from database.models import Transactions
 from database.cruds import TransactionsCRUD
-from shchemas import TransactionSchema, TransactionGetSchema, TransactionPostSchema
+from shchemas import TransactionSchema, TransactionGetSchema, TransactionPostSchema, UserLoginSchema
 
 transaction_router = APIRouter(prefix='/transactions')
 
@@ -17,7 +18,10 @@ transaction_router = APIRouter(prefix='/transactions')
     summary='Получить все транзакции.',
     description='Выводит список всех транзакций.'
 )
-async def get_all_transactions(db: AsyncSession = Depends(get_db)) -> List[TransactionGetSchema]:
+async def get_all_transactions(
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> List[TransactionGetSchema]:
     """
     Получение списка всех транзакций.
 
@@ -54,7 +58,11 @@ async def get_all_transactions(db: AsyncSession = Depends(get_db)) -> List[Trans
     summary='Получить транзакцию по уникальному ключу.',
     description='Выводит транзакцию по уникальному ключу.'
 )
-async def get_transaction_by_id(transaction_id: int, db: AsyncSession = Depends(get_db)) -> TransactionGetSchema:
+async def get_transaction_by_id(
+        transaction_id: int,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> TransactionGetSchema:
     """
     Получение транзакции по уникальному ключу.
 
@@ -92,7 +100,11 @@ async def get_transaction_by_id(transaction_id: int, db: AsyncSession = Depends(
     summary='Создать транзакцию.',
     description='Создает новую транзакцию.'
 )
-async def create_transaction(transaction_data: TransactionPostSchema, db: AsyncSession = Depends(get_db)) -> TransactionPostSchema:
+async def create_transaction(
+        transaction_data: TransactionPostSchema,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> TransactionPostSchema:
     """
     Создание новой транзакции.
 
@@ -141,8 +153,12 @@ async def create_transaction(transaction_data: TransactionPostSchema, db: AsyncS
     summary='Обновить транзакцию по уникальному ключу.',
     description='Обновляет запись о транзакции по уникальному ключу.'
 )
-async def update_transaction(transaction_id: int, changes: TransactionSchema,
-                          db: AsyncSession = Depends(get_db)) -> TransactionSchema:
+async def update_transaction(
+        transaction_id: int,
+        changes: TransactionSchema,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> TransactionSchema:
     """
     Обновление транзакции по уникальному ключу.
 
@@ -196,7 +212,11 @@ async def update_transaction(transaction_id: int, changes: TransactionSchema,
     summary='Удалить транзакцию по уникальному ключу.',
     description='Удаляет запись о транзакции по уникальному ключу.'
 )
-async def delete_transaction(transaction_id: int, db: AsyncSession = Depends(get_db)) -> dict[str, str]:
+async def delete_transaction(
+        transaction_id: int,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> dict[str, str]:
     """
     Удаление транзакции по уникальному ключу.
 

@@ -3,10 +3,11 @@ from fastapi import APIRouter, HTTPException
 from fastapi.params import Depends
 from sqlalchemy.exc import OperationalError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from api.sign_in_router import get_current_user
 from database.database import get_db
 from database.models import Goals
 from database.cruds import GoalsCRUD
-from shchemas import GoalSchema, GoalGetSchema, GoalPostSchema
+from shchemas import GoalSchema, GoalGetSchema, GoalPostSchema, UserLoginSchema
 
 goal_router = APIRouter(prefix='/goals')
 
@@ -17,7 +18,10 @@ goal_router = APIRouter(prefix='/goals')
     summary='Получить все цели.',
     description='Выводит список всех целей.'
 )
-async def get_all_goals(db: AsyncSession = Depends(get_db)) -> List[GoalGetSchema]:
+async def get_all_goals(
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> List[GoalGetSchema]:
     """
     Получение списка всех целей.
 
@@ -54,7 +58,11 @@ async def get_all_goals(db: AsyncSession = Depends(get_db)) -> List[GoalGetSchem
     summary='Получить цель по уникальному ключу.',
     description='Выводит цель по уникальному ключу.'
 )
-async def get_goal_by_id(goal_id: int, db: AsyncSession = Depends(get_db)) -> GoalGetSchema:
+async def get_goal_by_id(
+        goal_id: int,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> GoalGetSchema:
     """
     Получение цели по уникальному ключу.
 
@@ -92,7 +100,11 @@ async def get_goal_by_id(goal_id: int, db: AsyncSession = Depends(get_db)) -> Go
     summary='Создать цель.',
     description='Создает новую цель.'
 )
-async def create_goal(goal_data: GoalPostSchema, db: AsyncSession = Depends(get_db)) -> GoalPostSchema:
+async def create_goal(
+        goal_data: GoalPostSchema,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> GoalPostSchema:
     """
     Создание новой цели.
 
@@ -141,8 +153,12 @@ async def create_goal(goal_data: GoalPostSchema, db: AsyncSession = Depends(get_
     summary='Обновить цель по уникальному ключу.',
     description='Обновляет запись о цели по уникальному ключу.'
 )
-async def update_goal(goal_id: int, changes: GoalSchema,
-                          db: AsyncSession = Depends(get_db)) -> GoalSchema:
+async def update_goal(
+        goal_id: int,
+        changes: GoalSchema,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> GoalSchema:
     """
     Обновление цели по уникальному ключу.
 
@@ -196,7 +212,11 @@ async def update_goal(goal_id: int, changes: GoalSchema,
     summary='Удалить цель по уникальному ключу.',
     description='Удаляет запись о цели по уникальному ключу.'
 )
-async def delete_goal(goal_id: int, db: AsyncSession = Depends(get_db)) -> dict[str, str]:
+async def delete_goal(
+        goal_id: int,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> dict[str, str]:
     """
     Удаление цели по уникальному ключу.
 
