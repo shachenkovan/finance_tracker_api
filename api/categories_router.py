@@ -3,10 +3,11 @@ from fastapi import APIRouter, HTTPException
 from fastapi.params import Depends
 from sqlalchemy.exc import OperationalError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from api.sign_in_router import get_current_user
 from database.database import get_db
 from database.models import Categories
 from database.cruds import CategoriesCRUD
-from shchemas import CategoryGetSchema, CategoryPostSchema, CategorySchema
+from shchemas import CategoryGetSchema, CategoryPostSchema, CategorySchema, UserLoginSchema
 
 category_router = APIRouter(prefix='/categories')
 
@@ -17,7 +18,10 @@ category_router = APIRouter(prefix='/categories')
     summary='Получить все категории.',
     description='Выводит список всех категорий.'
 )
-async def get_all_categories(db: AsyncSession = Depends(get_db)) -> List[CategoryGetSchema]:
+async def get_all_categories(
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> List[CategoryGetSchema]:
     """
     Получение списка всех категорий.
 
@@ -54,7 +58,11 @@ async def get_all_categories(db: AsyncSession = Depends(get_db)) -> List[Categor
     summary='Получить категорию по уникальному ключу.',
     description='Выводит категорию по уникальному ключу.'
 )
-async def get_category_by_id(category_id: int, db: AsyncSession = Depends(get_db)) -> CategoryGetSchema:
+async def get_category_by_id(
+        category_id: int,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> CategoryGetSchema:
     """
     Получение категории по уникальному ключу.
 
@@ -92,7 +100,11 @@ async def get_category_by_id(category_id: int, db: AsyncSession = Depends(get_db
     summary='Создать категорию.',
     description='Создает новую категорию.'
 )
-async def create_category(category_data: CategoryPostSchema, db: AsyncSession = Depends(get_db)) -> CategoryPostSchema:
+async def create_category(
+        category_data: CategoryPostSchema,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> CategoryPostSchema:
     """
     Создание новой категории.
 
@@ -141,8 +153,12 @@ async def create_category(category_data: CategoryPostSchema, db: AsyncSession = 
     summary='Обновить категорию по уникальному ключу.',
     description='Обновляет запись о категории по уникальному ключу.'
 )
-async def update_category(category_id: int, changes: CategorySchema,
-                          db: AsyncSession = Depends(get_db)) -> CategorySchema:
+async def update_category(
+        category_id: int,
+        changes: CategorySchema,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> CategorySchema:
     """
     Обновление категории по уникальному ключу.
 
@@ -196,7 +212,11 @@ async def update_category(category_id: int, changes: CategorySchema,
     summary='Удалить категорию по уникальному ключу.',
     description='Удаляет запись о категории по уникальному ключу.'
 )
-async def delete_category(category_id: int, db: AsyncSession = Depends(get_db)) -> dict[str, str]:
+async def delete_category(
+        category_id: int,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> dict[str, str]:
     """
     Удаление категории по уникальному ключу.
 

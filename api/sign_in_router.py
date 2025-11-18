@@ -82,3 +82,47 @@ async def reg(user_data: UserLoginSchema, db: AsyncSession = Depends(get_db)):
                 status_code=500,
                 detail=f'Ошибка сервера: {e}'
             )
+
+
+@sign_in_router.get(
+    '/current_user',
+    summary='Получить текущего пользователя.',
+    description='Возвращает данные пользователя из JWT токена.'
+)
+async def get_current_user(
+        token=Depends(security.access_token_required),
+        db: AsyncSession = Depends(get_db)
+) -> dict:
+    """
+    Получение данных текущего пользователя по JWT токену.
+    """
+    try:
+        user_id = token.__dict__['sub']
+        if not user_id:
+            raise HTTPException(
+                status_code=401,
+                detail='Неверный токен: отсутствует user_id.'
+            )
+        user = await UsersCRUD.get_by_id(db, int(user_id))
+        if not user:
+            raise HTTPException(
+                status_code=404,
+                detail='Пользователь не найден.'
+            )
+        return {
+            'user_id': user.id,
+            'login': user.login,
+            'name': user.name,
+            'passport': user.passport,
+            'is_admin': user.is_admin
+        }
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail='Неверный формат user_id в токене.'
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f'Ошибка сервера: {str(e)}'
+        )

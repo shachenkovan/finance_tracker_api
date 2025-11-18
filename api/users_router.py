@@ -3,10 +3,11 @@ from fastapi import APIRouter, HTTPException
 from fastapi.params import Depends
 from sqlalchemy.exc import OperationalError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from api.sign_in_router import get_current_user
 from database.database import get_db
 from database.models import Users
 from database.cruds import UsersCRUD
-from shchemas import UserSchema, UserGetSchema, UserPostSchema
+from shchemas import UserSchema, UserGetSchema, UserPostSchema, UserLoginSchema
 
 user_router = APIRouter(prefix='/users')
 
@@ -17,7 +18,10 @@ user_router = APIRouter(prefix='/users')
     summary='Получить всех пользователей.',
     description='Выводит список всех пользователей.'
 )
-async def get_all_users(db: AsyncSession = Depends(get_db)) -> List[UserGetSchema]:
+async def get_all_users(
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> List[UserGetSchema]:
     """
     Получение списка всех пользователей.
 
@@ -54,7 +58,11 @@ async def get_all_users(db: AsyncSession = Depends(get_db)) -> List[UserGetSchem
     summary='Получить пользователя по уникальному ключу.',
     description='Выводит пользователя по уникальному ключу.'
 )
-async def get_user_by_id(user_id: int, db: AsyncSession = Depends(get_db)) -> UserGetSchema:
+async def get_user_by_id(
+        user_id: int,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> UserGetSchema:
     """
     Получение пользователя по уникальному ключу.
 
@@ -92,7 +100,11 @@ async def get_user_by_id(user_id: int, db: AsyncSession = Depends(get_db)) -> Us
     summary='Создать пользователя.',
     description='Создает нового пользователя.'
 )
-async def create_user(user_data: UserPostSchema, db: AsyncSession = Depends(get_db)) -> UserPostSchema:
+async def create_user(
+        user_data: UserPostSchema,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> UserPostSchema:
     """
     Создание нового пользователя.
 
@@ -141,8 +153,12 @@ async def create_user(user_data: UserPostSchema, db: AsyncSession = Depends(get_
     summary='Обновить пользователя по уникальному ключу.',
     description='Обновляет запись о пользователе по уникальному ключу.'
 )
-async def update_user(user_id: int, changes: UserSchema,
-                          db: AsyncSession = Depends(get_db)) -> UserSchema:
+async def update_user(
+        user_id: int,
+        changes: UserSchema,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> UserSchema:
     """
     Обновление пользователя по уникальному ключу.
 
@@ -196,7 +212,11 @@ async def update_user(user_id: int, changes: UserSchema,
     summary='Удалить пользователя по уникальному ключу.',
     description='Удаляет запись о пользователе по уникальному ключу.'
 )
-async def delete_user(user_id: int, db: AsyncSession = Depends(get_db)) -> dict[str, str]:
+async def delete_user(
+        user_id: int,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserLoginSchema = Depends(get_current_user)
+) -> dict[str, str]:
     """
     Удаление пользователя по уникальному ключу.
 

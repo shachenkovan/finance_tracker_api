@@ -1,3 +1,4 @@
+from authx.exceptions import MissingTokenError
 from fastapi import FastAPI
 from api import (budget_router,
                  goal_router,
@@ -19,6 +20,15 @@ app.include_router(transaction_router, tags=['Транзакции'])
 app.include_router(user_router, tags=['Пользователи'])
 app.include_router(wallet_router, tags=['Кошельки'])
 app.include_router(sign_in_router, tags=['Вход в систему'])
+
+
+@app.exception_handler(MissingTokenError)
+async def missing_token_handler(request, exc):
+    from fastapi.responses import JSONResponse
+    return JSONResponse(
+        status_code=401,
+        content={"detail": "Вы не авторизованы. Пожалуйста, войдите в систему."}
+    )
 
 
 @app.get('/')
