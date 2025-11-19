@@ -1,5 +1,4 @@
 from decimal import Decimal
-from typing import Optional
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -16,10 +15,10 @@ class BudgetSchema(BaseModel):
     Кастомные валидаторы:
         correct_amount - проверка корректности переданной в модель суммы средств.
     """
-    name: Optional[str] = Field(max_length=250, default=None, description='Название бюджета.')
-    amount: Optional[Decimal] = Field(ge=0, default=None, description='Сумма средств в бюджете.')
-    category_id: Optional[int] = Field(gt=0, default=None, description='Уникальный ключ категории.')
-    user_id: Optional[int] = Field(gt=0, default=None, description='Уникальный ключ пользователя.')
+    name: str | None = Field(max_length=250, default=None, description='Название бюджета.')
+    amount: Decimal | None = Field(ge=0, default=None, description='Сумма средств в бюджете.')
+    category_id: int | None = Field(gt=0, default=None, description='Уникальный ключ категории.')
+    user_id: int | None = Field(gt=0, default=None, description='Уникальный ключ пользователя.')
 
     @field_validator('amount')
     @classmethod

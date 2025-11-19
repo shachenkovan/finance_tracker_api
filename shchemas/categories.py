@@ -1,4 +1,3 @@
-from typing import Optional
 from pydantic import BaseModel, Field
 from database.models.categories import CatTypes
 
@@ -12,8 +11,8 @@ class CategorySchema(BaseModel):
         is_public: bool | None - флаг, указывающий на пользовательскую категорию,
         type: CatTypes | None - тип категории.
     """
-    name: Optional[str | None] = Field(max_length=250, default=None, description='Название категории.')
-    is_public: Optional[bool | None] = Field(default=False,
+    name: str | None = Field(max_length=250, default=None, description='Название категории.')
+    is_public: bool | None = Field(default=False,
                                              description='Флаг, указывающий на пользовательскую категорию.')
     type: CatTypes | None = Field(default=CatTypes.Expense, description='Тип категории.')
 
