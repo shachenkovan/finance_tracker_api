@@ -32,6 +32,11 @@ async def get_all_users(
         List[UserGetSchema] - список пользователей в формате UserGetSchema.
     """
     try:
+        if not current_user['is_admin']:
+            raise HTTPException(
+                status_code=403,
+                detail='Нет прав на данное действие.'
+            )
         users = await UsersCRUD.get_all(db)
         if not users:
             raise HTTPException(
@@ -74,6 +79,11 @@ async def get_user_by_id(
         UserGetSchema - пользователя в формате UserGetSchema.
     """
     try:
+        if not current_user['is_admin'] and user_id != current_user['user_id']:
+            raise HTTPException(
+                status_code=403,
+                detail='Нет прав на данное действие.'
+            )
         user = await UsersCRUD.get_by_id(db, user_id)
         if not user:
             raise HTTPException(
@@ -116,6 +126,11 @@ async def create_user(
         UserPostSchema - пользователя в формате UserPostSchema.
     """
     try:
+        if not current_user['is_admin']:
+            raise HTTPException(
+                status_code=403,
+                detail='Нет прав на данное действие.'
+            )
         user = Users(**user_data.model_dump())
         new_user = await UsersCRUD.create(db, user)
         return UserPostSchema.model_validate(new_user)
@@ -171,6 +186,13 @@ async def update_user(
         UserSchema - пользователь в формате UserSchema.
     """
     try:
+        if not current_user['is_admin']:
+            changes.is_admin = False
+            if user_id != current_user['user_id']:
+                raise HTTPException(
+                    status_code=403,
+                    detail='Нет прав на данное действие.'
+                )
         upd_user = await UsersCRUD.update(db, user_id, changes.model_dump(exclude_unset=True))
         if not upd_user:
             raise HTTPException(
@@ -227,6 +249,11 @@ async def delete_user(
     Возвращает сообщение о результате операции.
     """
     try:
+        if not current_user['is_admin']:
+            raise HTTPException(
+                status_code=403,
+                detail='Нет прав на данное действие.'
+            )
         result = await UsersCRUD.delete(db, user_id)
         if not result:
             raise HTTPException(

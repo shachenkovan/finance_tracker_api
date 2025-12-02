@@ -1,5 +1,7 @@
-from authx.exceptions import MissingTokenError
+from authx.exceptions import MissingTokenError, JWTDecodeError
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+
 from api import (budget_router,
                  goal_router,
                  category_router,
@@ -24,11 +26,24 @@ app.include_router(sign_in_router, tags=['Вход в систему'])
 
 @app.exception_handler(MissingTokenError)
 async def missing_token_handler(request, exc):
-    from fastapi.responses import JSONResponse
     return JSONResponse(
         status_code=401,
-        content={"detail": "Вы не авторизованы. Пожалуйста, войдите в систему."}
+        content={'detail': 'Вы не авторизованы. Пожалуйста, войдите в систему.'}
     )
+
+
+@app.exception_handler(JWTDecodeError)
+async def decode_error_handler(request, exc: JWTDecodeError):
+    if 'expired' in str(exc).lower():
+        return JSONResponse(
+            status_code=401,
+            content={'detail': 'Токен истек. Авторизируйтесь повторно.'}
+        )
+    else:
+        return JSONResponse(
+            status_code=401,
+            content={'detail': 'Неверный токен.'}
+        )
 
 
 @app.get('/')

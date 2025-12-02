@@ -32,14 +32,19 @@ async def get_all_categories(
         List[CategoryGetSchema] - список категорий в формате CategoryGetSchema.
     """
     try:
-        categories = await CategoriesCRUD.get_all(db)
-        if not categories:
-            raise HTTPException(
-                status_code=404,
-                detail='Категории не были найдены.'
-            )
-        else:
+        if current_user['is_admin']:
+            categories = await CategoriesCRUD.get_all(db)
+            if not categories:
+                raise HTTPException(
+                    status_code=404,
+                    detail='Категории не были найдены.'
+                )
             return [CategoryGetSchema.model_validate(category.__dict__) for category in categories]
+        else:
+            raise HTTPException(
+                status_code=403,
+                detail='У вас нет прав на данное действие.'
+            )
     except OperationalError as e:
         raise HTTPException(
             status_code=500,
@@ -74,14 +79,19 @@ async def get_category_by_id(
         CategoryGetSchema - категория в формате CategoryGetSchema.
     """
     try:
-        category = await CategoriesCRUD.get_by_id(db, category_id)
-        if not category:
-            raise HTTPException(
-                status_code=404,
-                detail=f'Категория с id={category_id} не была найдена.'
-            )
-        else:
+        if current_user['is_admin']:
+            category = await CategoriesCRUD.get_by_id(db, category_id)
+            if not category:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f'Категория с id={category_id} не была найдена.'
+                )
             return CategoryGetSchema.model_validate(category.__dict__)
+        else:
+            raise HTTPException(
+                status_code=403,
+                detail='У вас нет прав на данное действие.'
+            )
     except OperationalError as e:
         raise HTTPException(
             status_code=500,
@@ -116,6 +126,8 @@ async def create_category(
         CategoryPostSchema - категория в формате CategoryPostSchema.
     """
     try:
+        if not current_user['is_admin']:
+            category_data.is_public = True
         category = Categories(**category_data.model_dump())
         new_category = await CategoriesCRUD.create(db, category)
         return CategoryPostSchema.model_validate(new_category)
@@ -171,14 +183,21 @@ async def update_category(
         CategorySchema - категория в формате CategorySchema.
     """
     try:
-        upd_category = await CategoriesCRUD.update(db, category_id, changes.model_dump(exclude_unset=True))
-        if not upd_category:
+        category = await CategoriesCRUD.get_by_id(db, category_id)
+        if not category:
             raise HTTPException(
                 status_code=404,
                 detail=f'Категория с id={category_id} не была найдена.'
             )
-        else:
-            return CategorySchema.model_validate(upd_category)
+        if not current_user['is_admin'] and not category.is_public:
+            raise HTTPException(
+                status_code=403,
+                detail=f'Данная категория установлена по умолчанию, ее нельзя изменить.'
+            )
+        if not current_user['is_admin']:
+            changes.__dict__['is_public'] = True
+        upd_category = await CategoriesCRUD.update(db, category_id, changes.model_dump(exclude_unset=True))
+        return CategorySchema.model_validate(upd_category)
     except IntegrityError as e:
         if 'unique' in str(e).lower():
             raise HTTPException(
@@ -227,14 +246,19 @@ async def delete_category(
     Возвращает сообщение о результате операции.
     """
     try:
-        result = await CategoriesCRUD.delete(db, category_id)
-        if not result:
+        category = await CategoriesCRUD.get_by_id(db, category_id)
+        if not category:
             raise HTTPException(
                 status_code=404,
-                detail=f'Категория с id={category_id} не найдена.'
+                detail=f'Категория с id={category_id} не была найдена.'
             )
-        else:
-            return result
+        if not current_user['is_admin'] and not category.is_public:
+            raise HTTPException(
+                status_code=403,
+                detail=f'Данная категория установлена по умолчанию, ее нельзя удалить.'
+            )
+        result = await CategoriesCRUD.delete(db, category_id)
+        return result
     except IntegrityError as e:
         if 'unique' in str(e).lower():
             raise HTTPException(

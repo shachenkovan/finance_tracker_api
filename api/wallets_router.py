@@ -33,13 +33,14 @@ async def get_all_wallets(
     """
     try:
         wallets = await WalletsCRUD.get_all(db)
+        if not current_user['is_admin']:
+            wallets = [wallet for wallet in wallets if wallet.user_id == current_user['user_id']]
         if not wallets:
             raise HTTPException(
                 status_code=404,
                 detail='Кошельки не были найдены.'
             )
-        else:
-            return [WalletGetSchema.model_validate(wallet.__dict__) for wallet in wallets]
+        return [WalletGetSchema.model_validate(wallet.__dict__) for wallet in wallets]
     except OperationalError as e:
         raise HTTPException(
             status_code=500,
@@ -75,13 +76,12 @@ async def get_wallet_by_id(
     """
     try:
         wallet = await WalletsCRUD.get_by_id(db, wallet_id)
-        if not wallet:
+        if not wallet or (not current_user['is_admin'] and wallet.user_id == current_user['user_id']):
             raise HTTPException(
                 status_code=404,
                 detail=f'Кошелек с id={wallet_id} не был найден.'
             )
-        else:
-            return WalletGetSchema.model_validate(wallet.__dict__)
+        return WalletGetSchema.model_validate(wallet.__dict__)
     except OperationalError as e:
         raise HTTPException(
             status_code=500,
@@ -116,6 +116,8 @@ async def create_wallet(
         WalletPostSchema - кошелек в формате WalletPostSchema.
     """
     try:
+        if not current_user['is_admin']:
+            wallet_data.user_id = current_user['user_id']
         wallet = Wallets(**wallet_data.model_dump())
         new_wallet = await WalletsCRUD.create(db, wallet)
         return WalletPostSchema.model_validate(new_wallet)
@@ -171,14 +173,16 @@ async def update_wallet(
         WalletSchema - кошелек в формате WalletSchema.
     """
     try:
-        upd_wallet = await WalletsCRUD.update(db, wallet_id, changes.model_dump(exclude_unset=True))
-        if not upd_wallet:
+        wallet = await WalletsCRUD.get_by_id(db, wallet_id)
+        if not wallet or (not current_user['is_admin'] and wallet.user_id != current_user['user_id']):
             raise HTTPException(
                 status_code=404,
                 detail=f'Кошелек с id={wallet_id} не был найден.'
             )
-        else:
-            return WalletSchema.model_validate(upd_wallet)
+        if not current_user['is_admin']:
+            changes.__dict__['user_id'] = current_user['user_id']
+        upd_wallet = await WalletsCRUD.update(db, wallet_id, changes.model_dump(exclude_unset=True))
+        return WalletSchema.model_validate(upd_wallet)
     except IntegrityError as e:
         if 'unique' in str(e).lower():
             raise HTTPException(
@@ -227,14 +231,15 @@ async def delete_wallet(
     Возвращает сообщение о результате операции.
     """
     try:
-        result = await WalletsCRUD.delete(db, wallet_id)
-        if not result:
+        del_wallet = await WalletsCRUD.get_by_id(db, wallet_id)
+        del_wallet_user_id = del_wallet.user_id
+        if not del_wallet or (not current_user['is_admin'] and del_wallet_user_id != current_user['user_id']):
             raise HTTPException(
                 status_code=404,
                 detail=f'Кошелек с id={wallet_id} не найден.'
             )
-        else:
-            return result
+        result = await WalletsCRUD.delete(db, wallet_id)
+        return result
     except IntegrityError as e:
         if 'unique' in str(e).lower():
             raise HTTPException(
