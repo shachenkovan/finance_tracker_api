@@ -33,13 +33,14 @@ async def get_all_goals(
     """
     try:
         goals = await GoalsCRUD.get_all(db)
+        if not current_user['is_admin']:
+            goals = [goal for goal in goals if goal.user_id == current_user['user_id']]
         if not goals:
             raise HTTPException(
                 status_code=404,
                 detail='Цели не были найдены.'
             )
-        else:
-            return [GoalGetSchema.model_validate(goal.__dict__) for goal in goals]
+        return [GoalGetSchema.model_validate(goal.__dict__) for goal in goals]
     except OperationalError as e:
         raise HTTPException(
             status_code=500,
@@ -75,13 +76,12 @@ async def get_goal_by_id(
     """
     try:
         goal = await GoalsCRUD.get_by_id(db, goal_id)
-        if not goal:
+        if not goal or (not current_user['is_admin'] and goal.user_id != current_user['user_id']):
             raise HTTPException(
                 status_code=404,
                 detail=f'Цель с id={goal_id} не была найдена.'
             )
-        else:
-            return GoalGetSchema.model_validate(goal.__dict__)
+        return GoalGetSchema.model_validate(goal.__dict__)
     except OperationalError as e:
         raise HTTPException(
             status_code=500,
@@ -116,6 +116,8 @@ async def create_goal(
         GoalPostSchema - цель в формате GoalPostSchema.
     """
     try:
+        if not current_user['is_admin']:
+            goal_data.user_id = current_user['user_id']
         goal = Goals(**goal_data.model_dump())
         new_goal = await GoalsCRUD.create(db, goal)
         return GoalPostSchema.model_validate(new_goal)
@@ -171,14 +173,16 @@ async def update_goal(
         GoalSchema - цель в формате GoalSchema.
     """
     try:
-        upd_goal = await GoalsCRUD.update(db, goal_id, changes.model_dump(exclude_unset=True))
-        if not upd_goal:
+        goal = await GoalsCRUD.get_by_id(db, goal_id)
+        if not goal or (not current_user['is_admin'] and goal.user_id != current_user['user_id']):
             raise HTTPException(
                 status_code=404,
                 detail=f'Цель с id={goal_id} не была найдена.'
             )
-        else:
-            return GoalSchema.model_validate(upd_goal)
+        if not current_user['is_admin']:
+            changes.__dict__['user_id'] = current_user['user_id']
+        upd_goal = await GoalsCRUD.update(db, goal_id, changes.model_dump(exclude_unset=True))
+        return GoalSchema.model_validate(upd_goal)
     except IntegrityError as e:
         if 'unique' in str(e).lower():
             raise HTTPException(
@@ -227,14 +231,15 @@ async def delete_goal(
     Возвращает сообщение о результате операции.
     """
     try:
-        result = await GoalsCRUD.delete(db, goal_id)
-        if not result:
+        del_goal = await GoalsCRUD.get_by_id(db, goal_id)
+        del_goal_user_id = del_goal.user_id
+        if not del_goal or (not current_user['is_admin'] and del_goal_user_id != current_user['user_id']):
             raise HTTPException(
                 status_code=404,
                 detail=f'Цель с id={goal_id} не найдена.'
             )
-        else:
-            return result
+        result = await GoalsCRUD.delete(db, goal_id)
+        return result
     except IntegrityError as e:
         if 'unique' in str(e).lower():
             raise HTTPException(

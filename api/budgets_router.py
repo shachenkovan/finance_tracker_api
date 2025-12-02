@@ -33,13 +33,14 @@ async def get_all_budgets(
     """
     try:
         budgets = await BudgetsCRUD.get_all(db)
+        if not current_user['is_admin']:
+            budgets = [budget for budget in budgets if budget.user_id == current_user['user_id']]
         if not budgets:
             raise HTTPException(
                 status_code=404,
                 detail='Бюджеты не найдены.'
             )
-        else:
-            return [BudgetGetSchema.model_validate(budget.__dict__) for budget in budgets]
+        return [BudgetGetSchema.model_validate(budget.__dict__) for budget in budgets]
     except OperationalError as e:
         raise HTTPException(
             status_code=500,
@@ -75,13 +76,12 @@ async def get_budget_by_id(
     """
     try:
         budget = await BudgetsCRUD.get_by_id(db, budget_id)
-        if not budget:
+        if not budget or (not current_user['is_admin'] and budget.user_id != current_user['user_id']):
             raise HTTPException(
                 status_code=404,
                 detail=f'Бюджет с id={budget_id} не найден.'
             )
-        else:
-            return BudgetGetSchema.model_validate(budget.__dict__)
+        return BudgetGetSchema.model_validate(budget.__dict__)
     except OperationalError as e:
         raise HTTPException(
             status_code=500,
@@ -116,6 +116,8 @@ async def create_budget(
         BudgetPostSchema - бюджет в формате BudgetPostSchema.
     """
     try:
+        if not current_user['is_admin']:
+            budget_data.user_id = current_user['user_id']
         budget = Budgets(**budget_data.model_dump())
         new_budget = await BudgetsCRUD.create(db, budget)
         return BudgetPostSchema.model_validate(new_budget)
@@ -170,14 +172,16 @@ async def update_budget(
         BudgetSchema - бюджет в формате BudgetSchema.
     """
     try:
-        upd_budget = await BudgetsCRUD.update(db, budget_id, changes.model_dump(exclude_unset=True))
-        if not upd_budget:
+        budget = await BudgetsCRUD.get_by_id(db, budget_id)
+        if not budget or (not current_user['is_admin'] and budget['user_id'] != current_user['user_id']):
             raise HTTPException(
                 status_code=404,
                 detail=f'Бюджет с id={budget_id} не найден.'
             )
-        else:
-            return BudgetSchema.model_validate(upd_budget)
+        if not current_user['is_admin']:
+            changes.__dict__['user_id'] = current_user['user_id']
+        upd_budget = await BudgetsCRUD.update(db, budget_id, changes.model_dump(exclude_unset=True))
+        return BudgetSchema.model_validate(upd_budget)
     except IntegrityError as e:
         if 'unique' in str(e).lower():
             raise HTTPException(
@@ -226,14 +230,15 @@ async def delete_budget(
     Возвращает сообщение о результате операции.
     """
     try:
-        result = await BudgetsCRUD.delete(db, budget_id)
-        if not result:
+        del_budget = await BudgetsCRUD.get_by_id(db, budget_id)
+        del_budget_user_id = del_budget.user_id
+        if not del_budget or (not current_user['is_admin'] and del_budget_user_id != current_user['user_id']):
             raise HTTPException(
                 status_code=404,
                 detail=f'Бюджет с id={budget_id} не найден.'
             )
-        else:
-            return result
+        result = await BudgetsCRUD.delete(db, budget_id)
+        return result
     except IntegrityError as e:
         if 'unique' in str(e).lower():
             raise HTTPException(
