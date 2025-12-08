@@ -8,21 +8,22 @@ from api import (budget_router,
                  transaction_router,
                  user_router,
                  wallet_router,
-                 sign_in_router, personal_cabinet_router)
+                 sign_in_router, personal_cabinet_router, analytics_router)
 
 app = FastAPI(
     title="API для финансового трекера",
     description="API для управления личными финансами и бюджетом"
 )
 
+app.include_router(sign_in_router, tags=['Вход в систему'])
+app.include_router(personal_cabinet_router, tags=['Личный кабинет'])
+app.include_router(analytics_router, tags=['Аналитика'])
 app.include_router(budget_router, tags=['Бюджеты'])
 app.include_router(category_router, tags=['Категории'])
 app.include_router(goal_router, tags=['Цели'])
 app.include_router(transaction_router, tags=['Транзакции'])
 app.include_router(user_router, tags=['Пользователи'])
 app.include_router(wallet_router, tags=['Кошельки'])
-app.include_router(sign_in_router, tags=['Вход в систему'])
-app.include_router(personal_cabinet_router, tags=['Личный кабинет'])
 
 
 @app.exception_handler(MissingTokenError)
