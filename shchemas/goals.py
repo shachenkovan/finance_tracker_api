@@ -1,3 +1,4 @@
+import datetime
 from datetime import date
 from decimal import Decimal
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -51,6 +52,7 @@ class GoalSchema(BaseModel):
             raise ValueError('Текущий баланс не может превышать целевую сумму.')
         return self
 
+
 class GoalPostSchema(GoalSchema):
     """
     Pydantic-схема цели для добавления данных.
@@ -58,18 +60,31 @@ class GoalPostSchema(GoalSchema):
     Наследует все поля и валидаторы от GoalSchema.
 
     Дополнительные поля:
-        user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+        user_id: int - уникальный идентификатор пользователя.
     """
     user_id: int = Field(gt=0, description='Уникальный идентификатор пользователя.')
 
+    @field_validator('deadline')
+    @classmethod
+    def deadline_validate(cls, value: date | None) -> date | None:
+        """
+        Проверка ввода корректной даты, которая должна находиться в будущем.
+        """
+        today = datetime.date.today()
+        if value <= today:
+            raise ValueError('Дата достижения цели не может быть в прошлом.')
+        return value
 
-class GoalGetSchema(GoalPostSchema):
+
+class GoalGetSchema(GoalSchema):
     """
     Pydantic-схема цели для получения данных.
 
-    Наследует все поля и валидаторы от GoalPostSchema.
+    Наследует все поля и валидаторы от GoalSchema.
 
     Дополнительные поля:
-        id: int - уникальный ключ цели.
+        id: int - уникальный ключ цели,
+        user_id: int - уникальный идентификатор пользователя.
     """
     id: int = Field(gt=0, description='Уникальный ключ цели.')
+    user_id: int = Field(gt=0, description='Уникальный идентификатор пользователя.')
