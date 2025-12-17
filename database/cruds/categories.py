@@ -68,21 +68,16 @@ class CategoriesCRUD:
         """
         try:
             db.add(category)
-            await db.commit()
-            await db.refresh(category)
             return {
                 'name': category.name,
                 'is_public': category.is_public,
                 'type': category.type
             }
         except IntegrityError:
-            await db.rollback()
             raise
         except OperationalError:
-            await db.rollback()
             raise
         except Exception:
-            await db.rollback()
             raise
 
     @staticmethod
@@ -109,23 +104,17 @@ class CategoriesCRUD:
                 if hasattr(category, field):
                     setattr(category, field, value)
                 else:
-                    await db.rollback()
                     raise ValueError(f'Поле "{field}" не существует в модели.')
-            await db.commit()
-            await db.refresh(category)
             return {
                 'name': category.name,
                 'is_public': category.is_public,
                 'type': category.type
             }
         except IntegrityError:
-            await db.rollback()
             raise
         except OperationalError:
-            await db.rollback()
             raise
         except Exception:
-            await db.rollback()
             raise
 
     @staticmethod
@@ -145,16 +134,12 @@ class CategoriesCRUD:
             if not category:
                 raise NoResultFound(f'Категория с id={category_id} не найдена.')
             await db.delete(category)
-            await db.commit()
             return {
                 'message': f'Удаление записи с id={category_id} прошло успешно.'
             }
         except IntegrityError:
-            await db.rollback()
             raise
         except OperationalError:
-            await db.rollback()
             raise
         except Exception:
-            await db.rollback()
             raise

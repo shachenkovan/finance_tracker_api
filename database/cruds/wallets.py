@@ -68,21 +68,16 @@ class WalletsCRUD:
         """
         try:
             db.add(wallet)
-            await db.commit()
-            await db.refresh(wallet)
             return {
                 'amount': wallet.amount,
                 'type_of_wallet': wallet.type_of_wallet,
                 'user_id': wallet.user_id
             }
         except IntegrityError:
-            await db.rollback()
             raise
         except OperationalError:
-            await db.rollback()
             raise
         except Exception:
-            await db.rollback()
             raise
 
     @staticmethod
@@ -109,23 +104,17 @@ class WalletsCRUD:
                 if hasattr(wallet, field):
                     setattr(wallet, field, value)
                 else:
-                    await db.rollback()
                     raise ValueError(f'Поле "{field}" не существует в модели.')
-            await db.commit()
-            await db.refresh(wallet)
             return {
                 'amount': wallet.amount,
                 'type_of_wallet': wallet.type_of_wallet,
                 'user_id': wallet.user_id
             }
         except IntegrityError:
-            await db.rollback()
             raise
         except OperationalError:
-            await db.rollback()
             raise
         except Exception:
-            await db.rollback()
             raise
 
     @staticmethod
@@ -145,16 +134,12 @@ class WalletsCRUD:
             if not wallet:
                 raise NoResultFound(f'Кошелек с id={wallet_id} не найден.')
             await db.delete(wallet)
-            await db.commit()
             return {
                 'message': f'Удаление записи с id={wallet_id} прошло успешно.'
             }
         except IntegrityError:
-            await db.rollback()
             raise
         except OperationalError:
-            await db.rollback()
             raise
         except Exception:
-            await db.rollback()
             raise

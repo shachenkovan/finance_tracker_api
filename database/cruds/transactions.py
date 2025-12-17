@@ -68,21 +68,16 @@ class TransactionsCRUD:
         """
         try:
             db.add(transaction)
-            await db.commit()
-            await db.refresh(transaction)
             return {
                 'amount': transaction.amount,
                 'category_id': transaction.category_id,
                 'wallet_id': transaction.wallet_id
             }
         except IntegrityError:
-            await db.rollback()
             raise
         except OperationalError:
-            await db.rollback()
             raise
         except Exception:
-            await db.rollback()
             raise
 
     @staticmethod
@@ -109,23 +104,17 @@ class TransactionsCRUD:
                 if hasattr(transaction, field):
                     setattr(transaction, field, value)
                 else:
-                    await db.rollback()
                     raise ValueError(f'Поле "{field}" не существует в модели.')
-            await db.commit()
-            await db.refresh(transaction)
             return {
                 'amount': transaction.amount,
                 'category_id': transaction.category_id,
                 'wallet_id': transaction.wallet_id
             }
         except IntegrityError:
-            await db.rollback()
             raise
         except OperationalError:
-            await db.rollback()
             raise
         except Exception:
-            await db.rollback()
             raise
 
     @staticmethod
@@ -145,16 +134,12 @@ class TransactionsCRUD:
             if not transaction:
                 raise NoResultFound(f'Транзакция с id={transaction_id} не найдена.')
             await db.delete(transaction)
-            await db.commit()
             return {
                 'message': f'Удаление записи с id={transaction_id} прошло успешно.'
             }
         except IntegrityError:
-            await db.rollback()
             raise
         except OperationalError:
-            await db.rollback()
             raise
         except Exception:
-            await db.rollback()
             raise
