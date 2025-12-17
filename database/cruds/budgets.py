@@ -69,8 +69,6 @@ class BudgetsCRUD:
         """
         try:
             db.add(budget)
-            await db.commit()
-            await db.refresh(budget)
             return {
                 "name": budget.name,
                 "amount": budget.amount,
@@ -78,13 +76,10 @@ class BudgetsCRUD:
                 "user_id": budget.user_id
             }
         except IntegrityError:
-            await db.rollback()
             raise
         except OperationalError:
-            await db.rollback()
             raise
         except Exception:
-            await db.rollback()
             raise
 
     @staticmethod
@@ -112,10 +107,7 @@ class BudgetsCRUD:
                 if hasattr(budget, field):
                     setattr(budget, field, value)
                 else:
-                    await db.rollback()
                     raise ValueError(f'Поле "{field}" не существует в модели.')
-            await db.commit()
-            await db.refresh(budget)
             return {
                 "name": budget.name,
                 "amount": budget.amount,
@@ -123,13 +115,10 @@ class BudgetsCRUD:
                 "user_id": budget.user_id
             }
         except IntegrityError:
-            await db.rollback()
             raise
         except OperationalError:
-            await db.rollback()
             raise
         except Exception:
-            await db.rollback()
             raise
 
     @staticmethod
@@ -149,16 +138,12 @@ class BudgetsCRUD:
             if not budget:
                 raise NoResultFound(f'Бюджет c id={budget_id} не найден.')
             await db.delete(budget)
-            await db.commit()
             return {
                 'message': f'Удаление записи с id={budget_id} прошло успешно.'
             }
         except IntegrityError:
-            await db.rollback()
             raise
         except OperationalError:
-            await db.rollback()
             raise
         except Exception:
-            await db.rollback()
             raise

@@ -78,8 +78,6 @@ class UsersCRUD:
                 raise ValueError(f"Неподдерживаемый тип данных: {type(user_data)}")
 
             db.add(user)
-            await db.commit()
-            await db.refresh(user)
             return {
                 'name': user.name,
                 'lastname': user.lastname,
@@ -90,13 +88,10 @@ class UsersCRUD:
                 'is_admin': user.is_admin
             }
         except IntegrityError:
-            await db.rollback()
             raise
         except OperationalError:
-            await db.rollback()
             raise
         except Exception:
-            await db.rollback()
             raise
 
     @staticmethod
@@ -126,10 +121,7 @@ class UsersCRUD:
                 if hasattr(user, field):
                     setattr(user, field, value)
                 else:
-                    await db.rollback()
                     raise ValueError(f'Поле "{field}" не существует в модели.')
-            await db.commit()
-            await db.refresh(user)
             return {
                 'name': user.name,
                 'lastname': user.lastname,
@@ -140,13 +132,10 @@ class UsersCRUD:
                 'is_admin': user.is_admin
             }
         except IntegrityError:
-            await db.rollback()
             raise
         except OperationalError:
-            await db.rollback()
             raise
         except Exception:
-            await db.rollback()
             raise
 
     @staticmethod
@@ -166,18 +155,14 @@ class UsersCRUD:
             if not user:
                 raise NoResultFound(f'Пользователь с id={user_id} не найден.')
             await db.delete(user)
-            await db.commit()
             return {
                 'message': f'Удаление записи с id={user_id} прошло успешно.'
             }
         except IntegrityError:
-            await db.rollback()
             raise
         except OperationalError:
-            await db.rollback()
             raise
         except Exception:
-            await db.rollback()
             raise
 
 

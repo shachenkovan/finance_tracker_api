@@ -70,8 +70,6 @@ class GoalsCRUD:
         """
         try:
             db.add(goal)
-            await db.commit()
-            await db.refresh(goal)
             return {
                 'name': goal.name,
                 'cost': goal.cost,
@@ -80,13 +78,10 @@ class GoalsCRUD:
                 'user_id': goal.user_id
             }
         except IntegrityError:
-            await db.rollback()
             raise
         except OperationalError:
-            await db.rollback()
             raise
         except Exception:
-            await db.rollback()
             raise
 
     @staticmethod
@@ -115,10 +110,7 @@ class GoalsCRUD:
                 if hasattr(goal, field):
                     setattr(goal, field, value)
                 else:
-                    await db.rollback()
                     raise ValueError(f'Поле "{field}" не существует в модели.')
-            await db.commit()
-            await db.refresh(goal)
             return {
                 'name': goal.name,
                 'cost': goal.cost,
@@ -127,13 +119,10 @@ class GoalsCRUD:
                 'user_id': goal.user_id
             }
         except IntegrityError:
-            await db.rollback()
             raise
         except OperationalError:
-            await db.rollback()
             raise
         except Exception:
-            await db.rollback()
             raise
 
     @staticmethod
@@ -153,16 +142,12 @@ class GoalsCRUD:
             if not goal:
                 raise NoResultFound(f'Цель с id={goal_id} не найдена.')
             await db.delete(goal)
-            await db.commit()
             return {
                 'message': f'Удаление записи с id={goal_id} прошло успешно.'
             }
         except IntegrityError:
-            await db.rollback()
             raise
         except OperationalError:
-            await db.rollback()
             raise
         except Exception:
-            await db.rollback()
             raise
