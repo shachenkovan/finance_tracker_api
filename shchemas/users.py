@@ -132,7 +132,7 @@ class UserLoginSchema(BaseModel, SignInValidation):
     name: str | None = Field(max_length=50, default=None, description='Имя пользователя.')
     passport: str | None = Field(max_length=11, min_length=11, default=None,
                                  description='Паспортные данные пользователя в формате "серия номер".')
-    login: str = Field(min_length=5, max_length=255, default=None,
+    login: str = Field(min_length=5, max_length=255,
                        description='Логин учетной записи пользователя.')
-    password: str = Field(min_length=5, max_length=255, default=None,
+    password: str = Field(min_length=5, max_length=255,
                           description='Пароль учетной записи пользователя.')
