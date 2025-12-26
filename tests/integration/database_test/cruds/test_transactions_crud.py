@@ -1,8 +1,6 @@
 import pytest
 from database.cruds import transaction
 from database.models import Transactions
-from tests.fixtures.database_fixtures import db_session
-from tests.fixtures.database_fixtures import test_transaction, test_wallet, test_category, test_user
 
 
 @pytest.mark.asyncio

@@ -1,8 +1,6 @@
 import pytest
 from database.cruds import budget
 from database.models import Budgets
-from tests.fixtures.database_fixtures import db_session
-from tests.fixtures.database_fixtures import test_budget, test_user, test_category
 
 
 @pytest.mark.asyncio

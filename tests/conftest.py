@@ -1,8 +1,30 @@
+import asyncio
+import sys
+import os
 from datetime import date
-
 import pytest
+import pytest_asyncio
+from httpx import AsyncClient, ASGITransport
+
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from database.models import Users, Budgets, Goals, Categories, Transactions, Wallets
+from database.database import get_db
+from database.models import Users, Budgets, Goals, Transactions, Wallets, Categories
+from main import app
+
+
+@pytest.fixture(scope="session")
+def event_loop():
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+
+    yield loop
 
 
 @pytest.fixture(scope='function')
@@ -33,6 +55,54 @@ async def db_session():
             await session.close()
 
 
+@pytest.fixture(scope='function')
+async def override_get_db(db_session: AsyncSession):
+    async def _override_get_db():
+        try:
+            yield db_session
+        finally:
+            pass
+
+    return _override_get_db
+
+
+@pytest_asyncio.fixture(scope='function')
+async def async_client(override_get_db):
+    app.dependency_overrides[get_db] = override_get_db
+
+    async with AsyncClient(
+            transport=ASGITransport(app=app),
+            base_url="http://test"
+    ) as client:
+        yield client
+
+    app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture(scope='function')
+async def auth_client(async_client: AsyncClient, test_user):
+    login_data = {
+        "login": test_user.login,
+        "password": test_user.password
+    }
+
+    response = await async_client.post("/sign_in/authorization", json=login_data)
+
+    if response.status_code == 200:
+        token = response.json()["access_token"]
+
+        async_client.cookies.set(
+            "my_access_token",
+            token,
+            domain="test",
+            path="/"
+        )
+
+    yield async_client
+
+    async_client.cookies.clear()
+
+
 @pytest.fixture
 async def test_user(db_session: AsyncSession):
     """
@@ -43,9 +113,9 @@ async def test_user(db_session: AsyncSession):
         lastname='lastname_test',
         date_of_birth=date(2001, 1, 1),
         passport='1234 567890',
-        login='test_user',
-        password='test_pass',
-        is_admin=False
+        login='string1',
+        password='string1',
+        is_admin=True
     )
     db_session.add(user)
     await db_session.commit()
@@ -58,7 +128,7 @@ async def test_budget(db_session: AsyncSession, test_user, test_category):
     """
     Тестовый бюджет.
     """
-    budget =  Budgets(
+    budget = Budgets(
         name='test_budget',
         amount='22000',
         category_id=test_category.id,
@@ -78,7 +148,7 @@ async def test_goal(db_session: AsyncSession, test_user):
     goal = Goals(
         name='test_goal',
         cost='3500',
-        deadline=date(2027, 7 , 7),
+        deadline=date(2027, 7, 7),
         actual_amount='500',
         user_id=test_user.id
     )
@@ -134,4 +204,3 @@ async def test_wallet(db_session: AsyncSession, test_user):
     await db_session.commit()
     await db_session.refresh(wallet)
     return wallet
-

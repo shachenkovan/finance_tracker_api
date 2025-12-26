@@ -1,8 +1,6 @@
 import pytest
 from database.cruds import category
 from database.models import Categories
-from tests.fixtures.database_fixtures import db_session
-from tests.fixtures.database_fixtures import test_category
 
 
 @pytest.mark.asyncio

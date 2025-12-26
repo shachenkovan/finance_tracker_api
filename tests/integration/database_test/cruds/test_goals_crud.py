@@ -3,8 +3,6 @@ from datetime import date
 import pytest
 from database.cruds import goal
 from database.models import Goals
-from tests.fixtures.database_fixtures import db_session
-from tests.fixtures.database_fixtures import test_goal, test_user
 
 
 @pytest.mark.asyncio

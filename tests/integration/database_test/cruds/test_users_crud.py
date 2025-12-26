@@ -1,10 +1,7 @@
 from datetime import date
-
 import pytest
 from database.cruds import user
 from database.models import Users
-from tests.fixtures.database_fixtures import db_session
-from tests.fixtures.database_fixtures import test_user
 
 
 @pytest.mark.asyncio
