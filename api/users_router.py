@@ -193,14 +193,15 @@ async def update_user(
                     status_code=403,
                     detail='Нет прав на данное действие.'
                 )
-        upd_user = await UsersCRUD.update(db, user_id, changes.model_dump(exclude_unset=True))
-        if not upd_user:
-            raise HTTPException(
-                status_code=404,
-                detail=f'Пользователь с id={user_id} не был найден.'
-            )
         else:
-            return UserSchema.model_validate(upd_user)
+            user = await UsersCRUD.get_by_id(db, user_id)
+            if not user:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f'Пользователь с id={user_id} не был найден.'
+                )
+        upd_user = await UsersCRUD.update(db, user_id, changes.model_dump(exclude_unset=True))
+        return UserSchema.model_validate(upd_user)
     except IntegrityError as e:
         if 'unique' in str(e).lower():
             raise HTTPException(

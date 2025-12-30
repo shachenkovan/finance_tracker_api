@@ -232,8 +232,13 @@ async def delete_goal(
     """
     try:
         del_goal = await GoalsCRUD.get_by_id(db, goal_id)
+        if not del_goal:
+            raise HTTPException(
+                status_code=404,
+                detail=f'Цель с id={goal_id} не найдена.'
+            )
         del_goal_user_id = del_goal.user_id
-        if not del_goal or (not current_user['is_admin'] and del_goal_user_id != current_user['user_id']):
+        if not current_user['is_admin'] and del_goal_user_id != current_user['user_id']:
             raise HTTPException(
                 status_code=404,
                 detail=f'Цель с id={goal_id} не найдена.'

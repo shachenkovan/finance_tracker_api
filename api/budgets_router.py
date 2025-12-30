@@ -173,7 +173,12 @@ async def update_budget(
     """
     try:
         budget = await BudgetsCRUD.get_by_id(db, budget_id)
-        if not budget or (not current_user['is_admin'] and budget['user_id'] != current_user['user_id']):
+        if not budget:
+            raise HTTPException(
+                status_code=404,
+                detail=f'Бюджет с id={budget_id} не найден.'
+            )
+        if not current_user['is_admin'] and budget.user_id != current_user['user_id']:
             raise HTTPException(
                 status_code=404,
                 detail=f'Бюджет с id={budget_id} не найден.'
@@ -231,8 +236,13 @@ async def delete_budget(
     """
     try:
         del_budget = await BudgetsCRUD.get_by_id(db, budget_id)
+        if not del_budget:
+            raise HTTPException(
+                status_code=404,
+                detail=f'Бюджет с id={budget_id} не найден.'
+            )
         del_budget_user_id = del_budget.user_id
-        if not del_budget or (not current_user['is_admin'] and del_budget_user_id != current_user['user_id']):
+        if not current_user['is_admin'] and del_budget_user_id != current_user['user_id']:
             raise HTTPException(
                 status_code=404,
                 detail=f'Бюджет с id={budget_id} не найден.'

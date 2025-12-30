@@ -36,22 +36,20 @@ async def get_all_transactions(
         if current_user['is_admin']:
             transactions = await TransactionsCRUD.get_all(db)
         else:
-            async with async_session() as session:
-                stmt = (
-                    select(Transactions)
-                    .join(Wallets, Transactions.wallet_id == Wallets.id)
-                    .join(Users, Wallets.user_id == Users.id)
-                    .where(Users.id == current_user['user_id'])
-                )
-                result = await session.execute(stmt)
-                transactions = result.scalars().all()
+            stmt = (
+                select(Transactions)
+                .join(Wallets, Transactions.wallet_id == Wallets.id)
+                .join(Users, Wallets.user_id == Users.id)
+                .where(Users.id == current_user['user_id'])
+            )
+            result = await db.execute(stmt)
+            transactions = result.scalars().all()
         if not transactions:
              raise HTTPException(
                  status_code=404,
                  detail='Транзакции не были найдены.'
              )
-        else:
-            return [TransactionGetSchema.model_validate(transaction.__dict__) for transaction in transactions]
+        return [TransactionGetSchema.model_validate(transaction.__dict__) for transaction in transactions]
     except OperationalError as e:
         raise HTTPException(
             status_code=500,
@@ -89,20 +87,19 @@ async def get_transaction_by_id(
         if current_user['is_admin']:
             transaction = await TransactionsCRUD.get_by_id(db, transaction_id)
         else:
-            async with async_session() as session:
-                stmt = (
-                    select(Transactions)
-                    .join(Wallets, Transactions.wallet_id == Wallets.id)
-                    .join(Users, Wallets.user_id == Users.id)
-                    .where(Users.id == current_user['user_id'])
-                    .where(Transactions.id == transaction_id)
-                )
-                result = await session.execute(stmt)
-                transaction = result.scalars().first()
+            stmt = (
+                select(Transactions)
+                .join(Wallets, Transactions.wallet_id == Wallets.id)
+                .join(Users, Wallets.user_id == Users.id)
+                .where(Users.id == current_user['user_id'])
+                .where(Transactions.id == transaction_id)
+            )
+            result = await db.execute(stmt)
+            transaction = result.scalars().first()
         if not transaction:
             raise HTTPException(
                 status_code=404,
-                detail=f'Транзакция с id={transaction_id} не была найдена.'
+                detail=f'Транзакция с id={transaction_id} не найдена.'
             )
         else:
             return TransactionGetSchema.model_validate(transaction.__dict__)
@@ -145,7 +142,7 @@ async def create_transaction(
             wallet_ids = []
             for wallet in wallets:
                 if wallet.user_id == current_user['user_id']:
-                    wallet_ids.append(wallet.user_id)
+                    wallet_ids.append(wallet.id)
             if transaction_data.wallet_id not in wallet_ids:
                 raise HTTPException(
                     status_code=404,
@@ -207,31 +204,31 @@ async def update_transaction(
     """
     try:
         if not current_user['is_admin']:
-            async with async_session() as session:
-                stmt = (
-                    select(Transactions)
-                    .join(Wallets, Transactions.wallet_id == Wallets.id)
-                    .join(Users, Wallets.user_id == Users.id)
-                    .where(Users.id == current_user['user_id'])
-                    .where(Transactions.id == transaction_id)
-                )
-                result = await session.execute(stmt)
-                transaction = result.scalars().first()
-                if transaction:
-                    upd_transaction = await TransactionsCRUD.update(db, transaction_id,
-                                                                changes.model_dump(exclude_unset=True))
-                else:
-                    raise HTTPException(
-                        status_code=404,
-                        detail=f'Транзакция с id={transaction_id} не была найдена.'
-                    )
-        else:
-            upd_transaction = await TransactionsCRUD.update(db, transaction_id, changes.model_dump(exclude_unset=True))
-            if not upd_transaction:
+            stmt = (
+                select(Transactions)
+                .join(Wallets, Transactions.wallet_id == Wallets.id)
+                .join(Users, Wallets.user_id == Users.id)
+                .where(Users.id == current_user['user_id'])
+                .where(Transactions.id == transaction_id)
+            )
+            result = await db.execute(stmt)
+            transaction = result.scalars().first()
+            if transaction:
+                upd_transaction = await TransactionsCRUD.update(db, transaction_id,
+                                                            changes.model_dump(exclude_unset=True))
+            else:
                 raise HTTPException(
                     status_code=404,
-                    detail=f'Транзакция с id={transaction_id} не была найдена.'
+                    detail=f'Транзакция с id={transaction_id} не найдена.'
                 )
+        else:
+            transaction = await TransactionsCRUD.get_by_id(db, transaction_id)
+            if not transaction:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f'Транзакция с id={transaction_id} не найдена.'
+                )
+            upd_transaction = await TransactionsCRUD.update(db, transaction.id, changes.model_dump(exclude_unset=True))
         return TransactionSchema.model_validate(upd_transaction)
     except IntegrityError as e:
         if 'unique' in str(e).lower():
@@ -284,20 +281,19 @@ async def delete_transaction(
         if current_user['is_admin']:
             result = await TransactionsCRUD.delete(db, transaction_id)
         else:
-            async with async_session() as session:
-                stmt = (
-                    select(Transactions)
-                    .join(Wallets, Transactions.wallet_id == Wallets.id)
-                    .join(Users, Wallets.user_id == Users.id)
-                    .where(Users.id == current_user['user_id'])
-                    .where(Transactions.id == transaction_id)
-                )
-                res = await session.execute(stmt)
-                transaction = res.scalars().first()
+            stmt = (
+                select(Transactions)
+                .join(Wallets, Transactions.wallet_id == Wallets.id)
+                .join(Users, Wallets.user_id == Users.id)
+                .where(Users.id == current_user['user_id'])
+                .where(Transactions.id == transaction_id)
+            )
+            res = await db.execute(stmt)
+            transaction = res.scalars().first()
             if not transaction:
                 raise HTTPException(
                     status_code=404,
-                    detail=f'Транзакция с id={transaction_id} не была найдена.'
+                    detail=f'Транзакция с id={transaction_id} не найдена.'
                 )
             else:
                 result = await TransactionsCRUD.delete(db, transaction_id)
