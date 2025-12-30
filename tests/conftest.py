@@ -109,8 +109,8 @@ async def test_user(db_session: AsyncSession):
     Тестовый пользователь.
     """
     user = Users(
-        name='name_test',
-        lastname='lastname_test',
+        name='nametest',
+        lastname='lastnametest',
         date_of_birth=date(2001, 1, 1),
         passport='1234 567890',
         login='string1',
