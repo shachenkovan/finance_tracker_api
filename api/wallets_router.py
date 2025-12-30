@@ -76,7 +76,12 @@ async def get_wallet_by_id(
     """
     try:
         wallet = await WalletsCRUD.get_by_id(db, wallet_id)
-        if not wallet or (not current_user['is_admin'] and wallet.user_id == current_user['user_id']):
+        if not wallet:
+            raise HTTPException(
+                status_code=404,
+                detail=f'Кошелек с id={wallet_id} не был найден.'
+            )
+        if not current_user['is_admin'] and wallet.user_id == current_user['user_id']:
             raise HTTPException(
                 status_code=404,
                 detail=f'Кошелек с id={wallet_id} не был найден.'
@@ -232,8 +237,13 @@ async def delete_wallet(
     """
     try:
         del_wallet = await WalletsCRUD.get_by_id(db, wallet_id)
+        if not del_wallet:
+            raise HTTPException(
+                status_code=404,
+                detail=f'Кошелек с id={wallet_id} не найден.'
+            )
         del_wallet_user_id = del_wallet.user_id
-        if not del_wallet or (not current_user['is_admin'] and del_wallet_user_id != current_user['user_id']):
+        if not current_user['is_admin'] and del_wallet_user_id != current_user['user_id']:
             raise HTTPException(
                 status_code=404,
                 detail=f'Кошелек с id={wallet_id} не найден.'
